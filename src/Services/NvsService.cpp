@@ -38,6 +38,14 @@ int NvsService::getInt(const std::string& key, int defaultValue) {
     return preferences.getInt(key.c_str(), defaultValue);
 }
 
+void NvsService::saveBytes(const std::string& key, const uint8_t* data, size_t length) {
+    preferences.putBytes(key.c_str(), data, length);
+}
+
+void NvsService::getBytes(const std::string& key, uint8_t* data, size_t maxLength) {
+    preferences.getBytes(key.c_str(), data, maxLength);
+}
+
 void NvsService::remove(const std::string& key) {
     preferences.remove(key.c_str());
 }

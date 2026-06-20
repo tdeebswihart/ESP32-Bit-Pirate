@@ -132,6 +132,10 @@ private:
     uint32_t ethernetFrequency = 20000000; // 20 MHz
     std::array<uint8_t,6> ethernetMac = { 0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x42 };
 
+    // OSC Default Configuration
+    uint16_t oscDefaultPort = 8888;
+    bool     oscUseTcp      = false;
+
     // SubGHz Default Configuration
     uint8_t subGhzSckPin = 12;
     uint8_t subGhzMisoPin = 13;
@@ -390,6 +394,12 @@ public:
     void setEthernetFrequency(uint32_t freq) { ethernetFrequency = freq; }
     void setEthernetIrqPin(uint8_t pin) { ethernetIrqPin = pin; }
     void setEthernetMac(const std::array<uint8_t,6>& mac) { ethernetMac = mac; }
+
+    // OSC
+    uint16_t getOscDefaultPort() const { return oscDefaultPort; }
+    bool     getOscUseTcp()      const { return oscUseTcp; }
+    void setOscDefaultPort(uint16_t port) { oscDefaultPort = port; }
+    void setOscUseTcp(bool tcp)           { oscUseTcp = tcp; }
 
     // SubGHz
     uint8_t getSubGhzSckPin() const { return subGhzSckPin; }

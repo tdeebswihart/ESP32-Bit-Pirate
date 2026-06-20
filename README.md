@@ -73,6 +73,12 @@ From there you can [install the firmware](https://geo-tp.github.io/ESP32-Bit-Pir
 | **LILYGO T-Embed CC1101 Plus** | ![Photo of the LILYGO T-Embed CC1101 Plus](/images/tembedcc1101_s.jpg) | 4 GPIO (2x Qwiic), screen, encoder, speaker, mic, SD Card, CC1101, NRF24, PN532, IR TX, IR RX , battery                                 |
 | **Heltec WiFi LoRa 32 V4** | ![Photo of the Heltec WiFi LoRa 32 V4](/images/heltec-lora-32-v4_s.png) | 15 GPIO (Header), SX1262 LoRa, 2 buttons, **screen not supported** |
 | **Heltec Vision Master T190** | ![Photo of the Heltec Vision Master T190](/images/heltec-t190_s.png) | 15 GPIO (Header, Qwiiic), screen, 2 buttons, SX1262 LoRa |
+| **M5 Cardputer ADV + ILI9341 TFT** | | Cardputer ADV with an external 2.8" ILI9341 color TFT as the primary display, connected via the EXT port, [see wiring](#external-ili9341-tft-display-cardputer-adv) |
+| **M5 AtomS3 Lite** | ![Photo of the M5 Atom S3 Lite](/images/atom_s.jpg) | 8 GPIO (Grove, Header), IR TX, 1 buttton |
+| **M5 Cardputer** | ![Photo of the M5 Cardputer](/images/cardputer_s.png) | 2 GPIO (Grove), screen, keyboard, mic, speaker, IR TX, SD card, battery, [standalone mode](#standalone-mode-for-the-cardputer) |
+| **M5 Cardputer ADV** | ![Photo of the M5 Cardputer ADV](/images/cardputer-adv_s.jpg) | 12 GPIO (Grove, Header), screen, keyboard, mic, speaker, IR TX, SD card, IMU, battery, [standalone mode](#standalone-mode-for-the-cardputer) |
+| **M5 StampS3** | ![Photo of the M5 StampS3](/images/stamps3_s.jpg) | 9 GPIO (exposed pins), 1 button |
+| **M5 Stick S3** | ![Photo of the M5 Stick S3](/images/m5sticks3_s.jpg) | 13 GPIO (Grove, Header), screen, mic, speaker, IR TX, IR RX, IMU, 3 buttons, battery |
 | **Seeed Studio Xiao S3** | ![Photo of the Seeed Studio Xiao ESP32-S3](/images/xiaos3_s.jpg)        | 9 GPIO (exposed pins), 1 button |
 | **Waveshare ESP32-S3-GEEK** | ![Photo of the Waveshare ESP32-S3-GEEK](/images/waveshare-s3-geek_s.jpg) | 7 GPIO (Dupont header), screen, 1 button, SD card |
 
@@ -170,6 +176,59 @@ All interfaces share the same command structure and can be used interchangeably 
 
 ## Standalone Mode for the Cardputer
 ![A Cardputer running the ESP32 Bit Pirate in standalone mode](images/standalonemode_s.png)
+
+## External ILI9341 TFT Display (Cardputer ADV)
+
+The `cardputer-adv-ili9341` build target replaces the Cardputer ADV's built-in screen with an
+external **2.8" ILI9341 SPI TFT** (320×240, landscape). The keyboard is still used for standalone
+mode; the ILI9341 becomes the primary display for all device view output (mode screen, logic
+trace, waterfall, etc.).
+
+### Wiring (Cardputer EXT port)
+
+| ILI9341 pin | EXT pin | GPIO |
+|-------------|---------|------|
+| SCK / CLK   | 7       | 40   |
+| MOSI / SDI  | 9       | 14   |
+| DC / RS     | 5       | 6    |
+| CS          | 13      | 5    |
+| RST         | 1       | 3    |
+| BL / LED    | —       | user-defined (see below) |
+| VCC         | 3.3 V   | —    |
+| GND         | GND     | —    |
+
+### Backlight
+
+The backlight pin is disabled by default (`PIN_ILI9341_BL = -1`). To enable software PWM
+control, set it in `platformio.ini` under `[env:cardputer-adv-ili9341]`:
+
+```ini
+-DPIN_ILI9341_BL=XX   ; replace XX with the GPIO connected to BL/LED
+```
+
+### Building
+
+All display pins have `#ifndef`-guarded defaults, so they can be overridden individually without
+touching the source:
+
+```ini
+pio run -e cardputer-adv-ili9341 --target upload
+```
+
+To use different pins on another base board, define them in a custom environment:
+
+```ini
+[env:my-board-ili9341]
+build_flags =
+  ${env.build_flags}
+  -DDEVICE_ILI9341_SCREEN
+  -DPIN_ILI9341_SCK=12
+  -DPIN_ILI9341_MOSI=11
+  -DPIN_ILI9341_DC=8
+  -DPIN_ILI9341_CS=10
+  -DPIN_ILI9341_RST=9
+  -DPIN_ILI9341_BL=7
+```
 
 ## Browser-Based Web Serial Tools
 

@@ -23,13 +23,14 @@ void WifiController::handleCommand(const TerminalCommand &cmd)
     else if (root == "ssh") handleSsh(cmd);
     else if (root == "telnet") handleTelnet(cmd);
     else if (root == "nc") handleNetcat(cmd);
+    else if (root == "osc") handleOSC(cmd);
     else if (root == "nmap") handleNmap(cmd);
     else if (root == "modbus") handleModbus(cmd);
     else if (root == "http") handleHttp(cmd);
     else if (root == "lookup") handleLookup(cmd);
     else if (root == "discovery") handleDiscovery(cmd);
     else if (root == "flood") handleFlood(cmd);
-    else if (root == "repeater" || root == "extender") handleRepeater(cmd);  
+    else if (root == "repeater" || root == "extender") handleRepeater(cmd);
     else if (root == "reset") handleReset();
     else if (root == "deauth") handleDeauth(cmd);
     else handleHelp();
@@ -95,7 +96,7 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
             confirmation = userInputManager.readYesNo(
                 "WiFi: Use saved credentials for " + ssid + "? (Y/n)", true
             );
-        } 
+        }
 
         // Select network if no creds or not confirmed
         if (!confirmation) {
@@ -126,7 +127,7 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
     } else  {
         // Concatenate subcommand and args
         std::string full = cmd.getSubcommand() + " " + cmd.getArgs();
-    
+
         // Find the last space to separate SSID and password
         size_t pos = full.find_last_of(' ');
         if (pos == std::string::npos || pos == full.size() - 1) {
@@ -139,7 +140,7 @@ void WifiController::handleConnect(const TerminalCommand &cmd)
 
     terminalView.println("WiFi: Connecting to " + ssid + "...");
 
-    wifiService.setModeApSta();
+    wifiService.setModeApOnly();
     wifiService.connect(ssid, password);
     if (wifiService.isConnected()) {
         terminalView.println("\nWiFi: ✅ Connected successfully.");
@@ -227,7 +228,7 @@ void WifiController::handleAp(const TerminalCommand &cmd)
         handleApSpam();
         return;
     }
-    
+
     if (ssid == "stop") {
         wifiService.stopAccessPoint();
         terminalView.println("WiFi: Access Point stopped.\n");
@@ -270,7 +271,7 @@ void WifiController::handleAp(const TerminalCommand &cmd)
         terminalView.println("  SSID            : " + ssid);
         std::string apPassMasked = password.empty() ? "" : std::string(password.length(), '*');
         std::string first2 = password.substr(0, password.size() >= 2 ? 2 : 1);
-        apPassMasked = first2 + "********" + std::string(1, password.back()); 
+        apPassMasked = first2 + "********" + std::string(1, password.back());
         terminalView.println("  Password        : " + (apPassMasked.empty() ? "(open)" : apPassMasked));
         terminalView.println("  Access point IP : " + wifiService.getApIp());
 
@@ -360,7 +361,7 @@ void WifiController::handleScan(const TerminalCommand &)
 /*
 Probe
 */
-void WifiController::handleProbe() 
+void WifiController::handleProbe()
 {
     terminalView.println("WIFI: Starting probe for internet access on open networks...");
     terminalView.println("\n [⚠️  WARNING] ");
@@ -531,7 +532,7 @@ void WifiController::handleRepeater(const TerminalCommand& cmd)
         return;
     }
 
-    // Status   
+    // Status
     if (sub.empty() ) {
         sub = wifiService.isRepeaterRunning() ? "stop" : "start";
     }
@@ -571,8 +572,8 @@ void WifiController::handleRepeater(const TerminalCommand& cmd)
     if (apSsid.empty()) {
         terminalView.println("\nWiFi Repeater: Forwarding traffic from uplink.");
         apSsid = userInputManager.readSanitizedString(
-            "Enter Repeater SSID", 
-            "esp32repeater", 
+            "Enter Repeater SSID",
+            "esp32repeater",
             /*onlyLetter=*/false
         );
         apSsid = apSsid.size() > 32 ? apSsid.substr(0, 32) : apSsid;
@@ -580,7 +581,7 @@ void WifiController::handleRepeater(const TerminalCommand& cmd)
 
     if (apPass.empty()) {
         apPass = userInputManager.readSanitizedString(
-            "Enter Repeater Pass", 
+            "Enter Repeater Pass",
             "esp32bitpirate",
             /*onlyLetter=*/false
         );
@@ -649,7 +650,7 @@ void WifiController::handleRepeater(const TerminalCommand& cmd)
 Flood
 */
 void WifiController::handleFlood(const TerminalCommand& cmd)
-{   
+{
     // Channel
     uint8_t channel = 0;
     if (cmd.getSubcommand().empty()) {
@@ -668,7 +669,7 @@ void WifiController::handleFlood(const TerminalCommand& cmd)
             return;
         }
     }
-     
+
     terminalView.println("\nWiFi Flood: Starting on channel " + std::to_string(channel) + "... Press [ENTER] to stop.");
 
     if (!wifiService.prepareRawTx(channel)) {
@@ -692,14 +693,14 @@ void WifiController::handleWaterfall()
 {
     std::string title = "Peak: --";
     uint16_t pktDwellMs = userInputManager.readValidatedInt("Hold time per channel (ms)", 50, 5, 500);
-    
-    // Scale packet count to keep waterfall bars visually 
+
+    // Scale packet count to keep waterfall bars visually
     // consistent across different dwell times
     // reference is [dwell 80ms, 1 packet = +5]
     // meaning 10 packets received in 80ms = max score
     const float refDwellMs = 80.0f;
     const float refMul = 5.0f;
-    const float timeScale = refDwellMs / (float)pktDwellMs; 
+    const float timeScale = refDwellMs / (float)pktDwellMs;
 
     terminalView.println("\nWiFi Waterfall: Displaying on the ESP32 screen... Press [ENTER] to stop.");
     wifiService.startPassiveSniffing();
@@ -891,9 +892,9 @@ void WifiController::ensureConfigured()
 Deauthenticate stations attack
 */
 void WifiController::handleDeauth(const TerminalCommand &cmd)
-{   
+{
     auto target = cmd.getSubcommand();
-    
+
     // Select network if no target provided
     if (target.empty()) {
         terminalView.println("Wifi: Scanning for available networks...");

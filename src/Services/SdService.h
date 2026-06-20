@@ -30,6 +30,7 @@ public:
     bool writeBinaryFile(const std::string& filePath, const std::vector<uint8_t>& data);
     bool appendToFile(const std::string& filePath, const std::string& data);
     bool deleteFile(const std::string& filePath);
+    bool renameFile(const std::string& from, const std::string& to);
     bool ensureDirectory(const std::string& directory);
     bool deleteDirectory(const std::string& dirPath);
     std::string getFileExt(const std::string& path);

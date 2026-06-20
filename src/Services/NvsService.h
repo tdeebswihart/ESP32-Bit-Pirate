@@ -40,6 +40,10 @@ public:
     void saveInt(const std::string& key, int value);
     int getInt(const std::string& key, int defaultValue = 0);
 
+    // Read/write bytes
+    void saveBytes(const std::string& key, const uint8_t* data, size_t length);
+    void getBytes(const std::string& key, uint8_t* data, size_t maxLength);
+
     // Utils
     void remove(const std::string& key);
     void clearNamespace();

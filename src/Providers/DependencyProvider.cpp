@@ -11,6 +11,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
 
       // Services
       sdService(),
+      sdLogService(sdService),
       nvsService(),
       ledService(),
       uartService(),
@@ -45,6 +46,8 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       fmService(),
       loRaService(),
       meshtasticService(),
+      logService(sdService),
+      oscService(),
 
       // Transformers
       commandTransformer(),
@@ -113,12 +116,12 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
       ledController(terminalView, terminalInput, utilityService, ledService, argTransformer, userInputManager, helpShell),
       bluetoothController(terminalView, terminalInput, deviceInput, utilityService, bluetoothService, argTransformer, userInputManager, helpShell, mouseShell),
       i2sController(terminalView, terminalInput, utilityService, i2sService, argTransformer, userInputManager, helpShell),
-      wifiController(terminalView, deviceView, terminalInput, deviceInput, utilityService, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
+      wifiController(terminalView, deviceView, terminalInput, deviceInput, utilityService, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, oscService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
       canController(terminalView, terminalInput, userInputManager, utilityService, canService, argTransformer, helpShell),
       subGhzController(terminalView, terminalInput, deviceView, utilityService, subGhzService, pinService, i2sService, littleFsService, argTransformer, subGhzTransformer, userInputManager, subGhzAnalyzer, helpShell),
       rfidController(terminalView, terminalInput, utilityService, rfidService, userInputManager, argTransformer, helpShell),
       rf24Controller(terminalView, terminalInput, deviceView, utilityService, rf24Service, pinService, argTransformer, userInputManager, helpShell),
-      ethernetController(terminalView, deviceView, terminalInput, deviceInput, utilityService, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
+      ethernetController(terminalView, deviceView, terminalInput, deviceInput, utilityService, wifiService, wifiScannerService, ethernetService, sshService, netcatService, nmapService, oscService, icmpService, nvsService, httpService, telnetService, argTransformer, jsonTransformer, userInputManager, modbusShell, helpShell),
       usbController(terminalView, terminalInput, deviceInput, utilityService, usbService, argTransformer, userInputManager, helpShell, usbAdapterShell, mouseShell),
       cellController(terminalView, terminalInput, utilityService, cellService, argTransformer, atTransformer, userInputManager, helpShell, cellCallShell, cellSmsShell),
       fmController(terminalView, terminalInput, deviceView, utilityService, fmService, argTransformer, userInputManager, helpShell, fmBroadcastShell),
@@ -126,6 +129,7 @@ DependencyProvider::DependencyProvider(ITerminalView &terminalView, IDeviceView 
                      argTransformer, loRaTransformer,
                      commandTransformer, userInputManager, helpShell,
                      meshtasticShell),
+      logController(terminalView, logService, sdService),
       expanderController(terminalView, terminalInput, utilityService, uartService, argTransformer, userInputManager, helpShell)
 {
 }
@@ -139,6 +143,7 @@ IInput &DependencyProvider::getDeviceInput() { return deviceInput; }
 
 // Services
 SdService &DependencyProvider::getSdService() { return sdService; }
+SdLogService &DependencyProvider::getSdLogService() { return sdLogService; }
 NvsService &DependencyProvider::getNvsService() { return nvsService; }
 LedService &DependencyProvider::getLedService() { return ledService; }
 I2cService &DependencyProvider::getI2cService() { return i2cService; }
@@ -171,6 +176,8 @@ CellService &DependencyProvider::getCellService() { return cellService; }
 FmService &DependencyProvider::getFmService() { return fmService; }
 LoRaService &DependencyProvider::getLoRaService() { return loRaService; }
 MeshtasticService &DependencyProvider::getMeshtasticService() { return meshtasticService; }
+LogService &DependencyProvider::getLogService() { return logService; }
+OSCService &DependencyProvider::getOscService() { return oscService; }
 
 // Controllers
 UartController &DependencyProvider::getUartController() { return uartController; }
@@ -197,6 +204,7 @@ Rf24Controller &DependencyProvider::getRf24Controller() { return rf24Controller;
 CellController &DependencyProvider::getCellController() { return cellController; }
 FmController &DependencyProvider::getFmController() { return fmController; }
 LoRaController &DependencyProvider::getLoRaController() { return loRaController; }
+LogController &DependencyProvider::getLogController() { return logController; }
 ExpanderController &DependencyProvider::getExpanderController() { return expanderController; }
 
 // Transformers

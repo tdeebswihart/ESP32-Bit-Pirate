@@ -226,7 +226,7 @@ std::string HttpService::lastResponse()
     return out;
 }
 
-bool HttpService::isResponseReady() const noexcept 
+bool HttpService::isResponseReady() const noexcept
 {
     return ready.load(std::memory_order_acquire);
 }

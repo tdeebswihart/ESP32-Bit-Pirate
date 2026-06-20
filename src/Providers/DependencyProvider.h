@@ -10,6 +10,7 @@ and injecting shared instances of core components
 #include "Interfaces/IDeviceView.h"
 #include "Interfaces/IInput.h"
 #include "Services/SdService.h"
+#include "Services/SdLogService.h"
 #include "Services/NvsService.h"
 #include "Services/LedService.h"
 #include "Services/UartService.h"
@@ -48,6 +49,8 @@ and injecting shared instances of core components
 #include "Services/FmService.h"
 #include "Services/LoRaService.h"
 #include "Services/MeshtasticService.h"
+#include "Services/LogService.h"
+#include "Services/OSCService.h"
 #include "Controllers/UartController.h"
 #include "Controllers/I2cController.h"
 #include "Controllers/OneWireController.h"
@@ -72,6 +75,7 @@ and injecting shared instances of core components
 #include "Controllers/UsbS3Controller.h"
 #include "Controllers/CellController.h"
 #include "Controllers/FmController.h"
+#include "Controllers/LogController.h"
 #include "Controllers/ExpanderController.h"
 #include "Controllers/LoRaController.h"
 #include "Transformers/TerminalCommandTransformer.h"
@@ -131,6 +135,7 @@ public:
 
     // Services
     SdService &getSdService();
+    SdLogService &getSdLogService();
     NvsService &getNvsService();
     LedService &getLedService();
     UartService &getUartService();
@@ -167,6 +172,8 @@ public:
     FmService &getFmService();
     LoRaService &getLoRaService();
     MeshtasticService &getMeshtasticService();
+    LogService &getLogService();
+    OSCService &getOscService();
 
     // Controllers
     UartController &getUartController();
@@ -193,6 +200,7 @@ public:
     CellController &getCellController();
     FmController &getFmController();
     LoRaController &getLoRaController();
+    LogController &getLogController();
     ExpanderController &getExpanderController();
 
     // Transformers
@@ -259,6 +267,7 @@ private:
 
     // Services
     SdService sdService;
+    SdLogService sdLogService;
     NvsService nvsService;
     LedService ledService;
     UartService uartService;
@@ -297,6 +306,8 @@ private:
     FmService fmService;
     LoRaService loRaService;
     MeshtasticService meshtasticService;
+    LogService logService;
+    OSCService oscService;
 
     // Controllers
     UartController uartController;
@@ -323,6 +334,7 @@ private:
     CellController cellController;
     FmController fmController;
     LoRaController loRaController;
+    LogController logController;
     ExpanderController expanderController;
 
     // Transformers

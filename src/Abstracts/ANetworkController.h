@@ -16,6 +16,7 @@
 #include "Interfaces/INvsService.h"
 #include "Interfaces/ITelnetService.h"
 #include "Interfaces/IHttpService.h"
+#include "Services/OSCService.h"
 #include "Interfaces/IJsonTransformer.h"
 #include "Interfaces/IModbusShell.h"
 #include "Transformers/ArgTransformer.h"
@@ -39,6 +40,7 @@ public:
         ISshService& sshService,
         INetcatService& netcatService,
         INmapService& nmapService,
+        OSCService& oscService,
         IICMPService& icmpService,
         INvsService& nvsService,
         IHttpService& httpService,
@@ -63,6 +65,7 @@ protected:
     void handleHttp(const TerminalCommand &cmd);
     void handleHttpGet(const TerminalCommand &cmd);
     void handleHttpAnalyze(const TerminalCommand &cmd);
+    void handleOSC(const TerminalCommand& cmd);
 
     // Lookup
     void handleLookup(const TerminalCommand& cmd);
@@ -86,6 +89,7 @@ protected:
     ISshService&        sshService;
     INetcatService&     netcatService;
     INmapService&       nmapService;
+    OSCService&        oscService;
     IICMPService&       icmpService;
     IHttpService&       httpService;
     ITelnetService&     telnetService;

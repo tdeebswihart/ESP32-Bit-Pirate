@@ -23,6 +23,17 @@ void ActionDispatcher::setup(TerminalTypeEnum terminalType, std::string terminal
         provider.getTerminalView().initialize();
         provider.getTerminalView().welcome(terminalType, terminalInfos);
     }
+
+    if (state.getHasInternalSdCard()) {
+        auto& sd = provider.getSdService();
+        if (!sd.getSdState()) {
+            sd.configure(state.getSdCardClkPin(), state.getSdCardMisoPin(),
+                         state.getSdCardMosiPin(), state.getSdCardCsPin());
+        }
+        if (sd.getSdState()) {
+            provider.getLogService().begin();
+        }
+    }
 }
 
 /*
@@ -102,7 +113,7 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
         if (provider.getCommandTransformer().isScreenCommand(cmd)) {
             // hack to rerender the pinout view after screen related cmd
             setCurrentMode(state.getCurrentMode());
-        } 
+        }
         return;
     }
 
@@ -184,6 +195,9 @@ void ActionDispatcher::dispatchCommand(const TerminalCommand& cmd) {
             break;
         case ModeEnum::EXPANDER:
             provider.getExpanderController().handleCommand(cmd);
+            break;
+        case ModeEnum::LOG:
+            provider.getLogController().handleCommand(cmd);
             break;
     }
 
@@ -371,6 +385,9 @@ void ActionDispatcher::setCurrentMode(ModeEnum newMode) {
             state.setCurrentMode(ModeEnum::HIZ); // return to HIZ after the uart bridge
             newMode = ModeEnum::HIZ; // to display hiz just after
             break;
+        case ModeEnum::LOG:
+            provider.getLogController().ensureConfigured();
+            break;
         default:
             break;
     }
@@ -414,7 +431,7 @@ void ActionDispatcher::releaseMode(ModeEnum currentMode, ModeEnum newMode) {
             provider.getLoRaController().ensureReleased();
             break;
 
-        // For now, no realy heavy resources in other modes 
+        // For now, no realy heavy resources in other modes
 
         default:
             break;

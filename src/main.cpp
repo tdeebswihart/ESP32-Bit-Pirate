@@ -3,6 +3,11 @@
 #include <Views/SerialTerminalView.h>
 #include <Views/WebTerminalView.h>
 #include <Boards/Common/Views/NoScreenDeviceView.h>
+#include <Views/LGFXILI9341ScreenView.h>
+#if defined(DEVICE_ILI9341_SCREEN)
+#include <M5Unified.h>
+#include <M5Cardputer.h>
+#endif
 #include <Inputs/SerialTerminalInput.h>
 #include <Inputs/WebTerminalInput.h>
 #include <Boards/Cardputer/CardputerBoard.h>
@@ -97,6 +102,19 @@ void setup() {
         IDeviceView& deviceView = board.getDeviceView();
         IInput& deviceInput = board.getDeviceInput();
         IHostSerial& hostSerial = board.getHostSerial();
+    #elif defined(DEVICE_ILI9341_SCREEN)
+        // Use the external TFT as the primary device view while retaining Cardputer input.
+        auto cfg = M5.config();
+        M5Cardputer.begin(cfg, true);
+        LGFXILI9341ScreenView externalDeviceView;
+        CardputerInput externalDeviceInput;
+        BoardHostSerial externalHostSerial;
+        externalDeviceView.initialize();
+        externalDeviceView.logo();
+        externalDeviceInput.waitPress(3000);
+        IDeviceView& deviceView = externalDeviceView;
+        IInput& deviceInput = externalDeviceInput;
+        IHostSerial& hostSerial = externalHostSerial;
     #elif defined(DEVICE_CARDPUTER)
         CardputerBoard board;
         board.initialize();

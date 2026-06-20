@@ -1,5 +1,6 @@
 #include "ANetworkController.h"
 #include <freertos/FreeRTOS.h>
+#include "Models/TerminalCommand.h"
 
 /*
 Constructor
@@ -16,6 +17,7 @@ ANetworkController::ANetworkController(
     ISshService& sshService,
     INetcatService& netcatService,
     INmapService& nmapService,
+    OSCService& oscService,
     IICMPService& icmpService,
     INvsService& nvsService,
     IHttpService& httpService,
@@ -37,6 +39,7 @@ ANetworkController::ANetworkController(
   sshService(sshService),
   netcatService(netcatService),
   nmapService(nmapService),
+  oscService(oscService),
   icmpService(icmpService),
   nvsService(nvsService),
   httpService(httpService),
@@ -262,6 +265,135 @@ void ANetworkController::handleNetcat(const TerminalCommand& cmd)
 
     netcatService.close();
     terminalView.println("\r\n\nNetcat: Session closed.");
+}
+
+/*
+OSC
+*/
+void ANetworkController::handleOSC(const TerminalCommand &cmd)
+{
+    if (!wifiService.isConnected() && !ethernetService.isConnected()) {
+        terminalView.println("OSC: You must be connected to Wi-Fi or Ethernet. Use 'connect' first.");
+        return;
+    }
+
+    // Reconstruct the full token list from subcommand + args.
+    // TerminalCommand splits: root | subcommand | rest-of-args
+    // e.g. "osc -u 192.168.1.1:9000 /test 42" -> sub="-u", args="192.168.1.1:9000 /test 42"
+    std::vector<std::string> tokens;
+    if (!cmd.getSubcommand().empty())
+        tokens.push_back(cmd.getSubcommand());
+    for (auto& t : argTransformer.splitArgs(cmd.getArgs()))
+        tokens.push_back(t);
+
+    if (tokens.empty() || tokens[0] == "-h" || tokens[0] == "--help") {
+        terminalView.println(OSCService::getHelpText());
+        return;
+    }
+
+    // ---- Configuration sub-commands ----
+    const std::string& sub0 = tokens[0];
+
+    // osc (transport|tport|tp) (udp|tcp)
+    if (sub0 == "transport" || sub0 == "tport" || sub0 == "tp") {
+        if (tokens.size() < 2) {
+            terminalView.println("OSC: Usage: osc transport udp|tcp");
+            return;
+        }
+        const std::string val = argTransformer.toLower(tokens[1]);
+        if (val == "udp") {
+            globalState.setOscUseTcp(false);
+            terminalView.println("OSC: Default transport -> UDP.");
+        } else if (val == "tcp") {
+            globalState.setOscUseTcp(true);
+            terminalView.println("OSC: Default transport -> TCP.");
+        } else {
+            terminalView.println("OSC: Unknown transport '" + tokens[1] + "'. Use 'udp' or 'tcp'.");
+        }
+        return;
+    }
+
+    // osc port <PORT>
+    if (sub0 == "port") {
+        if (tokens.size() < 2 || !argTransformer.isValidNumber(tokens[1])) {
+            terminalView.println("OSC: Usage: osc port <0-65535>");
+            return;
+        }
+        uint16_t port = (uint16_t)argTransformer.toUint32(tokens[1]);
+        globalState.setOscDefaultPort(port);
+        terminalView.println("OSC: Default port -> " + tokens[1] + ".");
+        return;
+    }
+
+    // ---- Send command ----
+    // Parse optional transport flag
+    size_t idx = 0;
+    bool useTcp = globalState.getOscUseTcp();
+
+    if (sub0 == "-u" || sub0 == "--udp") {
+        useTcp = false;
+        idx = 1;
+    } else if (sub0 == "-t" || sub0 == "--tcp") {
+        useTcp = true;
+        idx = 1;
+    }
+
+    if (idx >= tokens.size()) {
+        terminalView.println(OSCService::getHelpText());
+        return;
+    }
+
+    // Parse HOST[:PORT]
+    const std::string& hostPort = tokens[idx++];
+    std::string host;
+    uint16_t port = globalState.getOscDefaultPort();
+
+    // rfind(':') to handle IPv6 literals — but we only support IPv4/hostnames here.
+    size_t colonPos = hostPort.rfind(':');
+    if (colonPos != std::string::npos) {
+        host = hostPort.substr(0, colonPos);
+        const std::string portStr = hostPort.substr(colonPos + 1);
+        if (!argTransformer.isValidNumber(portStr)) {
+            terminalView.println("OSC: Invalid port in '" + hostPort + "'.");
+            return;
+        }
+        port = (uint16_t)argTransformer.toUint32(portStr);
+    } else {
+        host = hostPort;
+    }
+
+    if (host.empty()) {
+        terminalView.println("OSC: Missing host. Usage: osc <host[:port]> /address [args...]");
+        return;
+    }
+
+    // Parse OSC address (must start with '/')
+    if (idx >= tokens.size()) {
+        terminalView.println("OSC: Missing OSC address. Usage: osc <host[:port]> /address [args...]");
+        return;
+    }
+    std::string oscAddress = tokens[idx++];
+    if (oscAddress[0] != '/') oscAddress = "/" + oscAddress;
+
+    // Remaining tokens are OSC arguments
+    std::vector<std::string> oscArgs(tokens.begin() + idx, tokens.end());
+
+    // Send
+    std::string error;
+    bool ok = useTcp
+        ? oscService.sendTCP(host, port, oscAddress, oscArgs, error)
+        : oscService.sendUDP(host, port, oscAddress, oscArgs, error);
+
+    if (ok) {
+        std::string info = std::string("OSC: Sent ") + (useTcp ? "TCP" : "UDP")
+            + " -> " + host + ":" + std::to_string(port)
+            + " " + oscAddress;
+        if (!oscArgs.empty())
+            info += " (" + std::to_string(oscArgs.size()) + " arg(s))";
+        terminalView.println(info);
+    } else {
+        terminalView.println("OSC: Failed: " + error);
+    }
 }
 
 /*

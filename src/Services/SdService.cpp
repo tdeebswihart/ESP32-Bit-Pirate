@@ -202,6 +202,11 @@ bool SdService::deleteFile(const std::string& filePath) {
     return false;
 }
 
+bool SdService::renameFile(const std::string& from, const std::string& to) {
+    if (!sdCardMounted) return false;
+    return SD.rename(from.c_str(), to.c_str());
+}
+
 std::string SdService::getFileExt(const std::string& path) {
     size_t pos = path.find_last_of('.');
     return (pos != std::string::npos && pos < path.length() - 1) ? path.substr(pos + 1) : "";
